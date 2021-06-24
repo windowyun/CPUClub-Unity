@@ -1,13 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
     public float moveSpeed = 3.0f;
     public float jumpPower = 10.0f;
+    public float invincibilityTime = 3.0f;
+    public int presentScene = 0;
 
     public int hp = 3;
+
+    bool isHurt = false;
 
     Transform trans;
     Rigidbody2D rigid2;
@@ -42,13 +47,13 @@ public class Player : MonoBehaviour
 
         rigid2.velocity = new Vector2(h * moveSpeed, rigid2.velocity.y);
 
-       
-        if(Input.GetButton("Horizontal"))
+
+        if (Input.GetButton("Horizontal"))
             anim.SetBool("moving", true);
 
         else
             anim.SetBool("moving", false);
-        
+
 
         FilpX();
     }
@@ -63,7 +68,7 @@ public class Player : MonoBehaviour
 
     void Jump()
     {
-        
+
 
         if (Input.GetButtonDown("Jump"))// && isGround == true)
         {
@@ -81,40 +86,51 @@ public class Player : MonoBehaviour
 
             //AddForce 점프
             rigid2.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-            
+
             anim.SetBool("jumping", true);
 
         }
 
-        
-        //점프 모션 종료 : 착지 모션 시작
-        if (rigid2.velocity.y == 0)
-        {
-            anim.SetBool("jumping", false);
-        }
-        
+
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.tag == "Enemy")
+        if (collision.gameObject.tag == "Enemy" && isHurt == false)
         {
             Hurt(collision.transform.position);
+        }
+
+        if(collision.gameObject.tag == "Ground")
+        {
+            anim.SetBool("jumping", false);
+        }
+
+        if(collision.gameObject.tag == "EndBlock")
+        {
+            SceneManager.LoadScene(presentScene);
         }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.tag == "Gem")
+        if (collision.gameObject.tag == "Gem")
         {
             Destroy(collision.gameObject);
+        }
+
+        if(collision.gameObject.tag == "Finish")
+        {
+            SceneManager.LoadScene(1+presentScene);
         }
     }
 
     void Hurt(Vector2 targetPos)
     {
         hp--;
+        isHurt = true;
         anim.SetTrigger("Hurt");
+        gameObject.layer = 10;
 
         if (hp <= 0)
         {
@@ -122,15 +138,40 @@ public class Player : MonoBehaviour
             capcoli.enabled = false;
             //Die Effect Jump
             rigid2.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
+
+            SceneManager.LoadScene(presentScene);
         }
 
         else
         {
-            
+
             //Reaction Force
             int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
-            rigid2.AddForce(new Vector2(dirc, 1) * 4, ForceMode2D.Impulse);
-;
+            rigid2.AddForce(new Vector2(dirc, 1) * 10, ForceMode2D.Impulse);
+
+            StartCoroutine(HurtRunTime());
+            StartCoroutine(alphablink());
+
+        }
+    }
+
+    IEnumerator HurtRunTime()
+    {
+        yield return new WaitForSeconds(invincibilityTime);
+        gameObject.layer = 9;
+        isHurt = false;
+    }
+
+    IEnumerator alphablink()
+    {
+        while(isHurt)
+        {
+            yield return new WaitForSeconds(0.2f);
+            render.color = new Color(1, 1, 1, 0.5f);
+            yield return new WaitForSeconds(0.2f);
+            render.color = new Color(1, 1, 1, 1f);
         }
     }
 }
+
+    

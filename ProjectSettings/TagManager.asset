@@ -7,6 +7,7 @@ TagManager:
   - Ground
   - Gem
   - Enemy
+  - EndBlock
   layers:
   - Default
   - TransparentFX
@@ -17,9 +18,9 @@ TagManager:
   - 
   - Enemy
   - Ground
-  - 
-  - 
-  - 
+  - Player
+  - PlayerHurt
+  - Trap
   - 
   - 
   - 
